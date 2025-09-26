@@ -1,0 +1,9 @@
+-hola
+/*
+n = 25;
+i = -1;
+repeat {
+    i = i + 1; 
+    t = i * i
+} until t > n || t == n 
+*/
