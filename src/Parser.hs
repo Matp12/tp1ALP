@@ -46,66 +46,37 @@ lis = makeTokenParser
 -----------------------------------
 --- Parser de expresiones enteras
 -----------------------------------
-
 intexpr :: Parser (Exp Int)
-intexpr = 
-    do 
-        t <- intterm
-        ((try
-          (do 
-            reservedOp lis "+"
-            e <- intexpr
-            return (Plus t e ))) 
-        <|>
-        (try
-          do 
-            reservedOp lis "-"
-            e <- intexpr
-            return (Minus t e))
-        <|> 
-        (return t))
-
+intexpr = (chainl1 intterm addop)
+ 
 intterm :: Parser (Exp Int)
-intterm = 
+intterm    = (chainl1 intfactor mulop)
+ 
+intfactor :: Parser (Exp Int)
+intfactor  = 
+  try (parens lis intexpr)
+  <|> 
   try
     (do 
-      f <- intfactor
-      try
-        (do 
-          reservedOp lis "*"
-          t <- intterm
-          return (Times f  t ))
-      <|>
-      try
-        (do 
-          reservedOp lis "/"
-          t <- term
-          return (Div f  t))
-      <|>
-        return f)
-
-
-intfactor :: Parser (Exp Int)
-intfactor = 
-  try
-  (do 
-    n<-natural lis
-    return (Const (fromInteger n)))
+      n<-natural lis
+      return (Const (fromInteger n)))
   <|>
   try
-  (do
-    v<- identifier lis 
-    return (Var v))
-  <|>
-  try (do
-    reservedOp lis "-"
-    i <- intexp
-    return (UMinus i))
-  <|>
-  try 
-  (do
-    i <- parens lis intexp
-    return i)
+    (do
+      v<- identifier lis 
+      return (Var v))
+ <|>
+ try 
+   (do
+      reservedOp lis "-"
+      i <- intexpr
+      return (UMinus i))
+
+mulop   =   do{ reservedOp lis "*"; return (Times)   }
+        <|> do{ reservedOp lis "/"; return (Div) }
+addop   =   do{ reservedOp lis "+"; return (Plus) }
+        <|> do{ reservedOp lis "-"; return (Minus) }
+
 ------------------------------------
 --- Parser de expresiones booleanas
 ------------------------------------
@@ -120,7 +91,7 @@ boolexp = undefined
 comm :: Parser Comm
 comm = 
     do
-      i<-intexp
+      i<-intexpr
       return (Let "salida" i) 
 
   {-try 
