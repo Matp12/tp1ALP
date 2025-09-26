@@ -43,6 +43,8 @@ lis = makeTokenParser
     }
   )
 
+--  braces = braces emptyDef
+
 -----------------------------------
 --- Parser de expresiones enteras
 -----------------------------------
@@ -86,6 +88,9 @@ boolexpr = (chainl1 boolexpr2 booland)
 
 boolexpr2 :: Parser (Exp Bool)
 boolexpr2 = (chainl1 boolterm boolor)
+
+booland = do{ reservedOp lis "&&"; return (And) }
+boolor  = do{ reservedOp lis "||"; return (Or) } 
 
 boolterm:: Parser (Exp Bool)
 boolterm =
@@ -134,29 +139,52 @@ boolatom =
     b<-boolexpr
     return (Not b)
 
-booland = do{ reservedOp lis "&&"; return (And) }
-boolor  = do{ reservedOp lis "||"; return (Or) } 
 -----------------------------------
 --- Parser de comandos
 -----------------------------------
 
 comm :: Parser Comm
-comm = 
-    do
-      b <- boolexpr
-      return (IfThenElse b Skip Skip)
+comm = (chainl1 commterm sequential)
 
-  {-try 
-    (do 
-      reserved lis "skip"
-      return Skip)
+sequential = do{ reservedOp lis ";"; return (Seq) }
+  
+commterm :: Parser Comm
+commterm = 
+  try
+    (do
+      reservedOp lis "repeat" 
+      c<-braces lis comm
+      reservedOp lis "until"
+      b <- boolexpr
+      return (RepeatUntil c b))
   <|>
-  do 
-    c1<-comm
-    reservedOp lis ";"
-    c2<-comm
-    return (Seq c1 c2)
--}
+  try
+    (do
+      reservedOp lis "if"
+      b <- boolexpr
+      c <- braces lis comm
+      (try
+        (do
+          reservedOp lis "else"
+          c2<- braces lis comm
+          return (IfThenElse b c c2)
+        )<|> return (IfThen b c))
+      )
+  <|>
+  commatom
+
+commatom:: Parser Comm
+commatom =
+  try
+    (do
+      v<-identifier lis
+      reservedOp lis "="
+      i <- intexpr
+      return (Let v i))
+  <|>
+  do
+    reservedOp lis "skip"
+    return Skip 
 
 
 ------------------------------------
