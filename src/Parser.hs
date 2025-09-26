@@ -81,9 +81,61 @@ addop   =   do{ reservedOp lis "+"; return (Plus) }
 --- Parser de expresiones booleanas
 ------------------------------------
 
-boolexp :: Parser (Exp Bool)
-boolexp = undefined
+boolexpr :: Parser (Exp Bool)
+boolexpr = (chainl1 boolexpr2 booland)
 
+boolexpr2 :: Parser (Exp Bool)
+boolexpr2 = (chainl1 boolterm boolor)
+
+boolterm:: Parser (Exp Bool)
+boolterm =
+  try (
+    do 
+      i<- intexpr
+    
+      op <- (try (do{ reservedOp lis "=="; return (Eq) })
+            <|> 
+            try (do{ reservedOp lis "!="; return (NEq) })
+            <|>
+            try (do{ reservedOp lis ">"; return (Gt) })
+            <|>
+            try (do{ reservedOp lis "<"; return (Lt) }))
+      j<- intexpr
+      return (op i j))
+    <|>
+    boolneg
+
+boolneg :: Parser (Exp Bool)
+boolneg = 
+  try
+  (do
+    reservedOp lis "!"
+    b<-boolneg
+    return (Not b))
+  <|>
+  boolatom 
+
+boolatom:: Parser (Exp Bool)
+boolatom =
+  try (parens lis boolexpr)
+  <|>
+  try
+    (do
+      t<- reserved lis "true"
+      return (BTrue))
+  <|>
+  try
+    (do
+      t<- reserved lis "false"
+      return (BFalse))
+  <|>
+  do
+    reservedOp lis "!"
+    b<-boolexpr
+    return (Not b)
+
+booland = do{ reservedOp lis "&&"; return (And) }
+boolor  = do{ reservedOp lis "||"; return (Or) } 
 -----------------------------------
 --- Parser de comandos
 -----------------------------------
@@ -91,8 +143,8 @@ boolexp = undefined
 comm :: Parser Comm
 comm = 
     do
-      i<-intexpr
-      return (Let "salida" i) 
+      b <- boolexpr
+      return (IfThenElse b Skip Skip)
 
   {-try 
     (do 
