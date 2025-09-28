@@ -1,3 +1,5 @@
+{-# LANGUAGE ViewPatterns #-}
+
 module AST where
 
 -- Identificadores de Variable
@@ -52,7 +54,7 @@ pattern Case xs <- (deIfThenElse -> xs)
     Case ((b,c):xs) = IfThenElse b c (Case xs)
 
 deIfThenElse :: Comm -> [(Exp Bool, Comm)]
-deIfThenElse (IfThenElse b c1 rest) = ((b,c1): (deIfThenElse rest))
+deIfThenElse (IfThenElse b c rest) = ((b,c): (deIfThenElse rest))
 deIfThenElse Skip = []
 deIfThenElse _ = error "case incorrecto"
 
