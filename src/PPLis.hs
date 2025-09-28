@@ -55,9 +55,9 @@ pComm (IfThenElse b c1 c2) =
     <+> lbrace
     $$  nest tabW (pComm c2)
     $$  rbrace
-pComm (Case xs) = text "case {\n" <+>  pCases xs <+> text "}" 
 pComm (RepeatUntil c b) =
   text "repeat" <+> lbrace $$ nest tabW (pComm c) $$ rbrace <+> text "until" <+> parens (pExp b)
+pComm (Case xs) = text "case {\n" <+>  pCases xs <+> text "}" 
 
 pCases :: [(Exp Bool, Comm)] -> Doc
 pCases [] = text "skip"
@@ -68,4 +68,3 @@ renderComm = render . pComm
 
 renderExp :: Exp a -> String
 renderExp = render . pExp
-
