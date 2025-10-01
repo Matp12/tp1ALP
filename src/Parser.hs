@@ -1,9 +1,10 @@
 module Parser where
 
-import           Text.ParserCombinators.Parsec
-import           Text.Parsec.Token
-import           Text.Parsec.Language           ( emptyDef )
-import           AST
+import Text.ParserCombinators.Parsec
+import Text.Parsec.Token
+import Text.Parsec.Language ( emptyDef )
+import AST
+
 
 -----------------------
 -- Función para facilitar el testing del parser.
@@ -92,7 +93,7 @@ boolexpr2 = (chainl1 boolterm boolor)
 booland = do{ reservedOp lis "&&"; return (And) }
 boolor  = do{ reservedOp lis "||"; return (Or) } 
 
-boolterm:: Parser (Exp Bool)
+boolterm :: Parser (Exp Bool)
 boolterm =
   try (
     do 
@@ -120,7 +121,7 @@ boolneg =
   <|>
   boolatom 
 
-boolatom:: Parser (Exp Bool)
+boolatom :: Parser (Exp Bool)
 boolatom =
   try (parens lis boolexpr)
   <|>
@@ -170,10 +171,17 @@ commterm =
           return (IfThenElse b c c2)
         )<|> return (IfThen b c))
       )
+    <|>
+    try
+      (do
+        reservedOp lis "case"
+        c <- braces lis clausula
+        return (Case c)
+      )
   <|>
   commatom
 
-commatom:: Parser Comm
+commatom :: Parser Comm
 commatom =
   try
     (do
@@ -186,6 +194,13 @@ commatom =
     reservedOp lis "skip"
     return Skip 
 
+clausula :: Parser [(Exp Bool, Comm)]
+clausula =
+  many1 (do
+    b <- boolexpr
+    reservedOp lis ":"
+    c <- braces lis comm
+    return (b,c))
 
 ------------------------------------
 -- Función de parseo
