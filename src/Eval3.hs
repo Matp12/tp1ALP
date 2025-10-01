@@ -76,8 +76,9 @@ evalExp (Var x) s = do
                       return (n :!: s)
 evalExp (VarInc x) s = do 
                         val <- lookfor x s 
-                        let s' = update x (val + 1) s    
-                        return (val+1 :!: s')
+                        let s' = update x (val + 1) s
+                            s'' = addTrace ("Let " ++ x ++ " " ++ show (val+1) ++ " ") s'     
+                        return (val+1 :!: s'')
 evalExp (UMinus e) s = do 
                         (n :!: s') <- evalExp e s
                         return (-n :!: s')
