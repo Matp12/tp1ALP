@@ -64,6 +64,12 @@ intfactor  =
       n<-natural lis
       return (Const (fromInteger n)))
   <|>
+   try
+    (do
+      v<- identifier lis
+      reservedOp lis "++" 
+      return (VarInc v))
+ <|>
   try
     (do
       v<- identifier lis 
